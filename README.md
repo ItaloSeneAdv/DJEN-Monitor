@@ -2,23 +2,35 @@
 
 Monitor local e simples de publicações do **Diário de Justiça Eletrônico Nacional (DJEN)** por número de OAB.
 
-O objetivo é direto: você informa sua OAB uma vez, o programa consulta o DJEN manualmente ou todos os dias no horário escolhido e gera uma planilha Excel organizada com os resultados.
+Você informa sua OAB uma vez, o programa consulta o DJEN manualmente ou todos os dias no horário escolhido e gera uma planilha Excel organizada com os resultados. É possível cadastrar várias inscrições, inclusive em estados diferentes.
 
-**Esta versão é exclusiva para Windows 64 bits.** Não exige Docker, servidor, navegador aberto ou banco de dados externo. A Release final também não exige que o usuário instale Python.
-
-É seguro! Qualquer desconfiança sobre o conteúdo, só mandar o link desse repositório para sua IA de preferência que ela confere.
+A v1.0.1 suporta **Windows 64 bits** e **macOS**, com pacotes separados para Macs Intel e Apple Silicon. A Release final não exige Python, Docker, servidor ou navegador aberto.
 
 ## Para quem só quer usar
 
-1. Abra **Releases** no GitHub (é ali na lateral direita).
-2. Baixe `DJEN-Monitor-Windows-x64.zip`.
-3. Extraia o ZIP para uma pasta normal.
-4. Abra `DJEN Monitor.exe`.
-5. Na primeira abertura, informe o número e a UF da OAB.
-6. Se quiser, informe um nome ou apelido para identificar aquela OAB. É 100% opcional e basta pressionar ENTER para deixar em branco.
-7. É possível cadastrar várias inscrições, inclusive em estados diferentes.
-8. Escolha a janela de busca e o horário diário.
-9. Pronto.
+Abra **Releases** e baixe o arquivo correspondente ao seu computador:
+
+- Windows 64 bits: `DJEN-Monitor-Windows-x64.zip`
+- Mac Intel: `DJEN-Monitor-macOS-Intel.zip`
+- Mac com Apple Silicon, incluindo M1, M2, M3, M4 e posteriores: `DJEN-Monitor-macOS-Apple-Silicon.zip`
+
+### Windows
+
+1. Extraia o ZIP.
+2. Abra `DJEN Monitor.exe`.
+3. Na primeira abertura, informe a OAB, UF e, se quiser, um nome ou apelido.
+4. Escolha a janela mínima de busca e o horário diário.
+5. Pronto. O programa não precisa ficar aberto para a consulta agendada.
+
+### macOS
+
+1. Extraia o ZIP inteiro.
+2. Abra `ABRIR_DJEN_MONITOR.command`.
+3. Na primeira abertura, informe a OAB, UF e, se quiser, um nome ou apelido.
+4. Escolha a janela mínima de busca e o horário diário.
+5. O agendamento usa o `launchd` do macOS e não exige que o programa fique aberto.
+
+O build do macOS é assinado de forma ad-hoc para validar a integridade do binário, mas não é notarizado pela Apple. Por isso, na primeira abertura o Gatekeeper pode bloquear o arquivo. Nesse caso, confira que o ZIP veio desta página oficial de Releases e use **Ajustes do Sistema > Privacidade e Segurança > Abrir Mesmo Assim**.
 
 Exemplo de cadastro:
 
@@ -28,33 +40,12 @@ UF da OAB: PR
 Nome/apelido desta OAB (opcional, ENTER para pular): João
 ```
 
-O menu aceita e exibe normalmente caracteres em português, inclusive acentos.
-
-Depois da configuração inicial, o menu é semelhante a este:
-
-```text
-========================================================================
- DJEN Monitor
- OABs: João (123456/PR), 654321/SP
- Busca: últimos 5 dia(s) no mínimo
- Automático: ATIVO às 10:00
-========================================================================
-
- [1] CONSULTAR AGORA
- [2] CONFIGURAÇÕES
- [3] AGENDAMENTO
- [4] ABRIR PLANILHAS
- [5] AJUDA / DIAGNÓSTICO
- [0] SAIR
-```
-
-Não é preciso deixar o programa aberto.
+O menu aceita caracteres em português, inclusive acentos.
 
 ## O que ele faz
 
 - consulta a API pública do Comunica PJe/DJEN por OAB e UF;
-- aceita várias OABs;
-- permite um nome ou apelido opcional para cada inscrição;
+- aceita várias OABs e um nome ou apelido opcional para cada inscrição;
 - consulta uma janela configurável de dias;
 - amplia automaticamente a coleta quando a última execução completa é mais antiga que essa janela;
 - testa variantes comuns da inscrição quando necessário;
@@ -63,21 +54,22 @@ Não é preciso deixar o programa aberto.
 - nunca transforma resposta incompleta em um falso "zero publicações";
 - deduplica comunicações já vistas usando SQLite local;
 - detecta comunicações atualizadas, reprocessadas, inativadas ou canceladas;
-- gera Excel em toda execução;
-- pode executar automaticamente pelo Agendador de Tarefas do Windows;
+- gera um arquivo Excel em toda execução;
+- executa automaticamente pelo Agendador de Tarefas no Windows ou pelo `launchd` no macOS;
 - não envia telemetria e não possui servidor próprio.
 
 ## Planilhas
 
-Por padrão os arquivos são salvos em:
+Por padrão:
 
 ```text
-Documentos\DJEN Monitor\
+Windows: Documentos\DJEN Monitor\
+macOS:   ~/Documents/DJEN Monitor/
 ```
 
-Se o Windows, OneDrive ou Controlled Folder Access impedir a gravação em Documentos, o programa usa automaticamente uma pasta segura no perfil local do usuário. A opção **ABRIR PLANILHAS** abre a pasta realmente utilizada na última execução.
+Se a pasta padrão não puder ser usada, o programa tenta uma pasta local segura no perfil do usuário. A opção **ABRIR PLANILHAS** abre a pasta realmente utilizada na última execução.
 
-Cada arquivo começa pela aba `RESUMO`, com contadores e atalhos, e contém:
+Cada arquivo contém:
 
 - `RESUMO`
 - `NOVAS_PUBLICACOES`
@@ -86,119 +78,81 @@ Cada arquivo começa pela aba `RESUMO`, com contadores e atalhos, e contém:
 - `REVISAR`
 - `ROTINA`
 
-Nas abas de publicações, **Inteiro teor** aparece como a 3ª coluna. O cabeçalho permanece congelado, sem congelamento vertical de colunas.
+Nas abas de publicações, **Inteiro teor** é a 3ª coluna. O cabeçalho fica congelado sem divisor vertical. Os filtros são filtros normais da planilha, sem tabelas estruturadas redundantes, para manter compatibilidade com o Excel desktop.
 
-As abas de publicações foram desenhadas para leitura humana. Ao abrir o arquivo, ficam visíveis primeiro os campos úteis para o trabalho diário:
+Os campos principais ficam visíveis. Identificador, hash, OAB retornada pela fonte, status, URL original, texto integral original e demais dados técnicos continuam preservados em colunas ocultas à direita e podem ser reexibidos no Excel.
 
-- classificação;
-- situação da coleta;
-- data de disponibilização;
-- processo;
-- tribunal e órgão julgador;
-- tipo de comunicação;
-- OAB monitorada, com o nome opcional configurado;
-- advogado(s) encontrado(s) na própria publicação;
-- partes;
-- motivo da classificação;
-- texto legível da publicação;
-- botão/link para o inteiro teor;
-- botão/link para consulta no DJEN.
+Textos maiores que o limite de uma célula são divididos em colunas técnicas sem perda do conteúdo original. Caracteres XML inválidos são neutralizados e valores externos são protegidos contra formula injection.
 
-Os dados técnicos não foram removidos. Identificador, hash, OAB retornada pela fonte, status, URL original, texto integral original e demais campos permanecem no mesmo arquivo em colunas ocultas à direita. Elas podem ser reexibidas no Excel quando necessário.
+## Classificação
 
-O texto mostrado na coluna principal é limpo de marcação HTML para facilitar a leitura. O texto integral original continua preservado nas colunas técnicas, inclusive quando precisa ser dividido por causa do limite de caracteres por célula do Excel.
+As categorias `POSSIVEL_PRAZO`, `REVISAR` e `ROTINA` são regras automáticas de triagem. Nenhuma delas afirma definitivamente que existe ou não existe prazo e nenhum item é descartado por classificação.
 
-A planilha também:
-
-- usa cores diferentes para `POSSÍVEL PRAZO`, `REVISAR` e `ROTINA`;
-- destaca `NOVA`, `ATUALIZADA`, `JÁ CONHECIDA` e `SEM HISTÓRICO`;
-- mantém filtros de tabela;
-- congela cabeçalho e colunas principais durante a rolagem;
-- mostra links com textos curtos em vez de URLs gigantes;
-- preserva URLs completas em colunas técnicas;
-- protege células contra formula injection proveniente de texto externo.
-
-## Nome ou apelido da OAB
-
-O nome é apenas um rótulo local para facilitar o uso quando existem várias inscrições.
-
-Exemplos:
-
-```text
-João (123456/PR)
-Maria (98765/SP)
-654321/SC
-```
-
-Ele não é enviado à API e não substitui o nome do advogado retornado pelo DJEN. O programa mantém separados:
-
-1. nome/apelido configurado localmente;
-2. OAB usada na consulta;
-3. nome e OAB efetivamente retornados pela publicação.
-
-Para alterar depois, use **CONFIGURAÇÕES > Alterar nome/apelido de uma OAB**.
-
-## Se o histórico local falhar
-
-O SQLite serve apenas para saber o que já apareceu antes. Se esse arquivo estiver corrompido, bloqueado ou inacessível, o programa não descarta os dados recebidos do DJEN.
-
-Ele tenta gerar uma planilha de emergência com os itens encontrados, marcando-os como:
-
-```text
-SEM HISTÓRICO
-REVISAR
-```
-
-Nesse caso ele não afirma que a publicação é nova, porque não conseguiu consultar o histórico local.
+Se o histórico SQLite estiver indisponível, o programa tenta preservar os resultados em uma planilha de emergência e sinaliza os itens para revisão, em vez de afirmar que são novos.
 
 ## Agendamento no Windows
 
-O programa cria uma tarefa do próprio usuário no **Agendador de Tarefas do Windows**. A tarefa:
+O programa cria uma tarefa do próprio usuário no **Agendador de Tarefas do Windows**. Ela:
 
 - roda diariamente no horário escolhido;
-- usa o mesmo `DJEN Monitor.exe` em modo automático e silencioso;
+- usa uma cópia estável do `DJEN Monitor.exe` em modo automático;
 - permite execução na bateria;
-- não interrompe a consulta se o notebook passar para bateria;
 - aceita iniciar depois do horário se a execução programada foi perdida;
-- impede duas instâncias automáticas simultâneas;
-- tenta reiniciar até 3 vezes, com intervalo de 15 minutos, quando a coleta termina com erro ou incompleta;
+- impede instâncias automáticas simultâneas;
+- tenta reiniciar até 3 vezes, com intervalo de 15 minutos;
 - tem limite de 2 horas por execução.
 
-O programa não acorda o computador do modo de suspensão. A tarefa usa logon interativo para não armazenar senha. A janela configurada funciona como janela mínima: se a última execução completa for mais antiga, o programa amplia automaticamente a próxima busca para cobrir o intervalo perdido.
+A criação ou remoção pode pedir confirmação do UAC. O programa não solicita nem armazena a senha do Windows.
 
-A criação ou remoção da tarefa pode pedir confirmação do UAC. O DJEN Monitor não solicita nem armazena a senha do Windows.
+## Agendamento no macOS
+
+O programa cria:
+
+```text
+~/Library/LaunchAgents/br.italosene.djenmonitor.plist
+```
+
+O `launchd` chama uma cópia estável do binário no horário escolhido. Saída e erros do processo agendado ficam nos logs locais do aplicativo. Alterar o horário recria o agente de forma controlada e desativar o agendamento descarrega e remove o plist.
 
 ## Onde ficam os dados locais
 
-Configuração, histórico e logs ficam no perfil local do Windows:
+Windows:
 
 ```text
 %LOCALAPPDATA%\DJEN Monitor\
 ```
 
-A configuração contém as OABs cadastradas e os nomes opcionais. Nada disso é colocado no código-fonte ou enviado a um servidor do projeto.
+macOS:
+
+```text
+~/Library/Application Support/DJEN Monitor/
+```
+
+Ali ficam configuração, banco de deduplicação, logs e a cópia usada pelo agendamento. A configuração contém as OABs e nomes opcionais. Nada disso é colocado no código-fonte ou enviado a um servidor do projeto.
+
+A Release do Windows inclui `REMOVER_DADOS.bat`. A Release do macOS inclui `REMOVER_DADOS.command`. Ambos removem configuração, histórico, logs e agendamento e perguntam separadamente antes de apagar as planilhas.
 
 ## Atualização
 
-Baixe uma Release nova e abra o novo `DJEN Monitor.exe`.
+Baixe a nova Release e abra o novo executável. A configuração anterior continua compatível. Se o agendamento já existir, o programa atualiza a cópia interna usada pela tarefa quando necessário.
 
-A configuração antiga continua compatível. Instalações criadas antes da existência do campo de nome continuam funcionando e simplesmente deixam o nome em branco até o usuário decidir preenchê-lo.
+## Avisos do sistema operacional
 
-Se o agendamento já existir, o programa atualiza a cópia interna usada pela tarefa.
+### Windows SmartScreen
 
-## Windows SmartScreen
+Builds comunitários sem assinatura Authenticode podem receber aviso do Windows SmartScreen. Eliminar corretamente esse aviso exige certificado de assinatura de código e reputação adequada.
 
-Builds comunitários sem assinatura Authenticode podem receber aviso do Windows SmartScreen. Isso não pode ser eliminado corretamente apenas com código. Uma distribuição sem esse tipo de aviso exige assinatura de código com certificado confiável e reputação adequada.
+### macOS Gatekeeper
 
-Confira sempre se o arquivo veio da página oficial de Releases deste repositório.
+Sem Developer ID e notarização da Apple, o macOS pode exigir confirmação manual na primeira abertura. A assinatura ad-hoc usada no CI verifica a consistência do binário, mas não substitui notarização.
+
+Em ambos os casos, baixe somente da página oficial de Releases deste repositório.
 
 ## Importante para uso jurídico
 
 O DJEN Monitor é uma ferramenta auxiliar de coleta e organização. Ele não substitui a consulta oficial, o acompanhamento processual ou a análise profissional do advogado.
 
-As categorias `POSSIVEL_PRAZO`, `REVISAR` e `ROTINA` são regras automáticas de triagem. Nenhuma delas afirma definitivamente que existe ou não existe prazo, e nenhum item é descartado por classificação.
-
-Em caso de coleta incompleta, erro de API, divergência de OAB ou ausência de campos relevantes, o programa sinaliza a situação na planilha.
+Em caso de coleta incompleta, erro de API, divergência de OAB ou ausência de campos relevantes, o programa sinaliza a situação em vez de esconder o item.
 
 Fontes oficiais:
 
@@ -209,48 +163,28 @@ Fontes oficiais:
 
 O programa é local. Ele envia para a API consultada apenas os parâmetros necessários para a pesquisa, como OAB, UF e período. Não possui analytics, conta de usuário, servidor próprio ou telemetria.
 
-Os resultados podem conter dados pessoais existentes em publicações judiciais. Proteja as planilhas e o perfil do Windows de acordo com as regras aplicáveis ao seu uso profissional.
+Os resultados podem conter dados pessoais existentes em publicações judiciais. Proteja as planilhas e o perfil do sistema operacional de acordo com as regras aplicáveis ao seu uso profissional.
 
-## Desenvolvedores
+## Desenvolvimento e validação
 
-Requisitos para trabalhar com o código-fonte:
+Requisitos do código-fonte:
 
 ```text
 Python 3.11+
-Windows 64 bits para validar o executável final e o Agendador de Tarefas
 ```
 
-Instalação de desenvolvimento:
+Os testes de CI usam Python 3.12.
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e . -r requirements-dev.txt
-python -m pytest
-```
+No Windows, o CI valida testes unitários e de integração, registro/remoção de tarefa temporária, build PyInstaller, autoteste do EXE, cópia estável e console UTF-8.
 
-Teste opcional contra a API real:
+No macOS, o CI executa a suíte completa separadamente em **x86_64** e **arm64**, valida sintaxe dos scripts `.command`, compila o binário real, executa `--self-test`, confirma a arquitetura Mach-O, aplica assinatura ad-hoc e verifica a assinatura antes de gerar os ZIPs.
 
-```powershell
-python tools\live_smoke.py NUMERO UF
-```
-
-## CI e Release
-
-O GitHub Actions no Windows executa:
-
-1. compilação de todo o Python;
-2. testes unitários e de integração;
-3. registro e remoção de uma tarefa temporária no Agendador do Windows;
-4. build real do `DJEN Monitor.exe` com PyInstaller;
-5. autoteste do executável sem console;
-6. autoteste da cópia estável usada pelo agendamento;
-7. autoteste do console em UTF-8, incluindo caracteres acentuados.
-
-Uma tag `v*` gera:
+Uma tag `v*` pode publicar os três assets:
 
 ```text
 DJEN-Monitor-Windows-x64.zip
+DJEN-Monitor-macOS-Intel.zip
+DJEN-Monitor-macOS-Apple-Silicon.zip
 ```
 
 ## Licença

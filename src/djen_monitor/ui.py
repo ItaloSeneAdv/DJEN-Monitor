@@ -17,7 +17,7 @@ from .scheduler import (
     schedule_exists,
 )
 from .storage import PublicationStore
-from .time_utils import brasilia_now, brasilia_today
+from .time_utils import brasilia_now, brasilia_today, format_datetime_ptbr
 
 
 def format_oab(item: OABConfig) -> str:
@@ -132,7 +132,8 @@ def print_header(cfg: AppConfig) -> None:
         with PublicationStore() as store:
             last = store.last_execution()
         if last:
-            last_text = f"{last['finished_at']} | novas: {last['total_new']} | atualizadas: {last['total_updated']}"
+            finished_at = format_datetime_ptbr(last.get("finished_at"))
+            last_text = f"{finished_at} | novas: {last['total_new']} | atualizadas: {last['total_updated']}"
     except Exception:
         pass
 

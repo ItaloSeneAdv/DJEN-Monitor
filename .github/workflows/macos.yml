@@ -23,6 +23,8 @@ jobs:
           python -m pip install -e . pytest "pyinstaller>=6,<7"
           python -m pytest
           python -m compileall -q src tests launcher.py
+          bash -n macos/ABRIR_DJEN_MONITOR.command
+          bash -n macos/REMOVER_DADOS.command
       - name: Build and smoke-test Intel executable
         run: |
           test "$(uname -m)" = "x86_64"
@@ -58,6 +60,8 @@ jobs:
           python -m pip install -e . pytest "pyinstaller>=6,<7"
           python -m pytest
           python -m compileall -q src tests launcher.py
+          bash -n macos/ABRIR_DJEN_MONITOR.command
+          bash -n macos/REMOVER_DADOS.command
       - name: Build and smoke-test Apple Silicon executable
         run: |
           test "$(uname -m)" = "arm64"

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .normalize import Publication, content_hash
 from .paths import database_path
+from .time_utils import format_datetime_ptbr
 
 
 class PublicationStore:
@@ -116,7 +117,11 @@ class PublicationStore:
             "started_at", "finished_at", "start_date", "end_date", "total_raw", "total_normalized",
             "total_new", "total_updated", "requests_made", "complete", "report_path", "error",
         ]
-        return dict(zip(keys, row))
+        result = dict(zip(keys, row))
+        # Este valor é usado apenas para exibição no menu. O banco continua
+        # preservando o timestamp ISO original para rastreabilidade.
+        result["finished_at"] = format_datetime_ptbr(result.get("finished_at"))
+        return result
 
     def last_complete_end_date(self) -> str | None:
         row = self.conn.execute(

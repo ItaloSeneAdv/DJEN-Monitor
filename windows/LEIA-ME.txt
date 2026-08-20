@@ -13,6 +13,11 @@ As planilhas ficam normalmente em Documentos\DJEN Monitor.
 
 A primeira aba da planilha é RESUMO. As abas de publicações mostram os campos principais de forma organizada, enquanto dados técnicos e texto original continuam preservados em colunas ocultas à direita.
 
+REMOVER / ZERAR DADOS
+---------------------
+Para remover o agendamento, configuração, OABs, histórico, logs e a cópia interna do programa, execute "REMOVER_DADOS.bat".
+As planilhas em Documentos só são apagadas se você confirmar separadamente.
+
 Se o Windows mostrar um aviso de segurança, confirme primeiro que o arquivo foi baixado da página oficial de Releases do repositório.
 
 Documentação completa:

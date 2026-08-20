@@ -1,0 +1,50 @@
+name: Release Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+      - name: Install and test
+        run: |
+          python -m pip install -e . pytest "pyinstaller>=6,<7"
+          python -m pytest
+          python -m compileall -q src tests launcher.py tools
+          python tools/windows_scheduler_smoke.py
+      - name: Build Windows executable and smoke-test it
+        shell: pwsh
+        run: |
+          pyinstaller --clean --onefile --noconsole --name "DJEN Monitor" --version-file "windows/version_info.txt" --collect-all openpyxl --collect-all tzdata --collect-all certifi launcher.py
+          $p = Start-Process -FilePath "dist/DJEN Monitor.exe" -ArgumentList "--self-test" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Self-test do executavel falhou: $($p.ExitCode)" }
+          $p = Start-Process -FilePath "dist/DJEN Monitor.exe" -ArgumentList "--self-test-stable-copy" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Self-test da copia agendada falhou: $($p.ExitCode)" }
+          $p = Start-Process -FilePath "dist/DJEN Monitor.exe" -ArgumentList "--self-test-console" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Self-test do console falhou: $($p.ExitCode)" }
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item "dist/DJEN Monitor.exe" "release/DJEN Monitor.exe"
+          Copy-Item "windows/LEIA-ME.txt" "release/LEIA-ME.txt"
+          Compress-Archive -Path "release/*" -DestinationPath "DJEN-Monitor-Windows-x64.zip" -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJEN-Monitor-Windows-x64
+          path: DJEN-Monitor-Windows-x64.zip
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DJEN-Monitor-Windows-x64.zip
+          generate_release_notes: true

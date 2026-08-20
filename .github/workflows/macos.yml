@@ -1,0 +1,86 @@
+name: macOS Build
+
+on:
+  push:
+    branches: [main, "feat/macos-v1.0.1"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  macos-intel:
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install and test
+        run: |
+          python -m pip install -e . pytest "pyinstaller>=6,<7"
+          python -m pytest
+          python -m compileall -q src tests launcher.py
+          bash -n macos/ABRIR_DJEN_MONITOR.command
+          bash -n macos/REMOVER_DADOS.command
+      - name: Build and smoke-test Intel executable
+        run: |
+          test "$(uname -m)" = "x86_64"
+          pyinstaller --clean --onefile --console --name "DJEN Monitor" --collect-all openpyxl --collect-all tzdata --collect-all certifi launcher.py
+          ./dist/DJEN\ Monitor --self-test
+          file "dist/DJEN Monitor" | grep -q "x86_64"
+          codesign --force --sign - "dist/DJEN Monitor"
+          codesign --verify --verbose "dist/DJEN Monitor"
+          mkdir -p release-mac
+          cp "dist/DJEN Monitor" release-mac/
+          cp macos/ABRIR_DJEN_MONITOR.command macos/REMOVER_DADOS.command macos/LEIA-ME.txt release-mac/
+          chmod +x "release-mac/DJEN Monitor" release-mac/*.command
+          ditto -c -k --sequesterRsrc release-mac DJEN-Monitor-macOS-Intel.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJEN-Monitor-macOS-Intel
+          path: DJEN-Monitor-macOS-Intel.zip
+      - name: Publish Intel asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DJEN-Monitor-macOS-Intel.zip
+
+  macos-apple-silicon:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install and test
+        run: |
+          python -m pip install -e . pytest "pyinstaller>=6,<7"
+          python -m pytest
+          python -m compileall -q src tests launcher.py
+          bash -n macos/ABRIR_DJEN_MONITOR.command
+          bash -n macos/REMOVER_DADOS.command
+      - name: Build and smoke-test Apple Silicon executable
+        run: |
+          test "$(uname -m)" = "arm64"
+          pyinstaller --clean --onefile --console --name "DJEN Monitor" --collect-all openpyxl --collect-all tzdata --collect-all certifi launcher.py
+          ./dist/DJEN\ Monitor --self-test
+          file "dist/DJEN Monitor" | grep -q "arm64"
+          codesign --force --sign - "dist/DJEN Monitor"
+          codesign --verify --verbose "dist/DJEN Monitor"
+          mkdir -p release-mac
+          cp "dist/DJEN Monitor" release-mac/
+          cp macos/ABRIR_DJEN_MONITOR.command macos/REMOVER_DADOS.command macos/LEIA-ME.txt release-mac/
+          chmod +x "release-mac/DJEN Monitor" release-mac/*.command
+          ditto -c -k --sequesterRsrc release-mac DJEN-Monitor-macOS-Apple-Silicon.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJEN-Monitor-macOS-Apple-Silicon
+          path: DJEN-Monitor-macOS-Apple-Silicon.zip
+      - name: Publish Apple Silicon asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DJEN-Monitor-macOS-Apple-Silicon.zip

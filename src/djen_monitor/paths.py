@@ -13,9 +13,10 @@ def app_data_dir() -> Path:
     if system == "Windows":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
         path = base / APP_NAME
+    elif system == "Darwin":
+        path = Path.home() / "Library" / "Application Support" / APP_NAME
     else:
-        # Mantido apenas para desenvolvimento/testes do codigo-fonte.
-        # A distribuição suportada desta versão e exclusivamente Windows.
+        # Mantido apenas para desenvolvimento/testes do código-fonte.
         path = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "djen-monitor"
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -89,7 +90,7 @@ def stable_bin_dir() -> Path:
 
 
 def fallback_reports_dir() -> Path:
-    """Pasta de relatorios sempre gravavel no perfil local do usuário."""
+    """Pasta de relatórios sempre gravável no perfil local do usuário."""
     path = app_data_dir() / "Planilhas"
     path.mkdir(parents=True, exist_ok=True)
     return path

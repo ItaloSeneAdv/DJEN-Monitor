@@ -5,13 +5,14 @@ import getpass
 import json
 import os
 import platform
+import plistlib
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from .constants import TASK_NAME_WINDOWS
-from .paths import app_data_dir, stable_bin_dir
+from .constants import LAUNCHD_LABEL_MACOS, TASK_NAME_WINDOWS
+from .paths import app_data_dir, log_dir, stable_bin_dir
 
 
 class SchedulerError(RuntimeError):
@@ -19,62 +20,158 @@ class SchedulerError(RuntimeError):
 
 
 def refresh_scheduled_binary() -> None:
-    """Atualiza a cópia estavel usada pelo Agendador sem recriar a tarefa."""
-    if platform.system() != "Windows" or not bool(getattr(sys, "frozen", False)):
+    """Atualiza a cópia estável usada pelo agendador sem recriar a tarefa."""
+    if not bool(getattr(sys, "frozen", False)):
         return
-    _stable_command()
+    if platform.system() in {"Windows", "Darwin"}:
+        _stable_command()
 
 
 def install_daily_schedule(horario: str) -> str:
-    if platform.system() != "Windows":
-        raise SchedulerError("O agendamento automatico desta versão esta disponivel somente no Windows.")
+    system = platform.system()
+    if system not in {"Windows", "Darwin"}:
+        raise SchedulerError("O agendamento automático está disponível no Windows e macOS.")
+
     command = _stable_command()
-    message = _install_windows(horario, command)
-    _write_marker(horario)
+    if system == "Windows":
+        message = _install_windows(horario, command)
+    else:
+        message = _install_macos(horario, command)
+
+    _write_marker(horario, system)
     return message
 
 
 def remove_daily_schedule() -> str:
-    if platform.system() != "Windows":
-        raise SchedulerError("O agendamento automatico desta versão esta disponivel somente no Windows.")
-    _remove_windows()
+    system = platform.system()
+    if system == "Windows":
+        _remove_windows()
+    elif system == "Darwin":
+        _remove_macos()
+    else:
+        raise SchedulerError("O agendamento automático está disponível no Windows e macOS.")
+
     _remove_marker()
     return "Agendamento removido."
 
 
 def schedule_exists() -> bool:
-    if platform.system() != "Windows":
-        return False
-    try:
-        task = _ps_single_quote(TASK_NAME_WINDOWS)
-        result = _run_hidden([
-            "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-            f"if (Get-ScheduledTask -TaskName '{task}' -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}",
-        ])
-        return result.returncode == 0
-    except Exception:
-        # O marcador nunca substitui a verificacao real quando o PowerShell
-        # respondeu. Ele serve apenas como fallback se o próprio PowerShell
-        # nao puder ser iniciado.
-        return _marker_path().exists()
+    system = platform.system()
+    if system == "Windows":
+        try:
+            task = _ps_single_quote(TASK_NAME_WINDOWS)
+            result = _run_hidden([
+                "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                f"if (Get-ScheduledTask -TaskName '{task}' -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}",
+            ])
+            return result.returncode == 0
+        except Exception:
+            # O marcador nunca substitui a verificação real quando o PowerShell
+            # respondeu. Ele serve apenas como fallback se o próprio PowerShell
+            # não puder ser iniciado.
+            return _marker_path().exists()
+
+    if system == "Darwin":
+        plist = _macos_plist_path()
+        if not plist.exists():
+            return False
+        try:
+            result = subprocess.run(
+                ["launchctl", "print", f"gui/{os.getuid()}/{LAUNCHD_LABEL_MACOS}"],
+                capture_output=True,
+                text=True,
+            )
+            return result.returncode == 0
+        except OSError:
+            # Se launchctl não puder ser invocado, a presença do plist é o
+            # melhor fallback local disponível.
+            return plist.exists()
+
+    return False
 
 
 def _stable_command() -> list[str]:
     frozen = bool(getattr(sys, "frozen", False))
+    system = platform.system()
     if frozen:
         source = Path(sys.executable).resolve()
-        target = stable_bin_dir() / "DJEN Monitor.exe"
+        filename = "DJEN Monitor.exe" if system == "Windows" else "DJEN Monitor"
+        target = stable_bin_dir() / filename
         try:
             if source != target.resolve():
                 temp = target.with_name(target.name + ".novo")
                 shutil.copy2(source, temp)
+                if system == "Darwin":
+                    temp.chmod(0o755)
                 os.replace(temp, target)
         except OSError as exc:
             raise SchedulerError(f"Não foi possível instalar a cópia usada pelo agendamento: {exc}") from exc
         return [str(target), "--automatico"]
 
-    # Modo de desenvolvimento. A Release para o usuário sempre usa o .exe.
+    # Modo de desenvolvimento. As Releases usam binário empacotado.
     return [sys.executable, "-m", "djen_monitor", "--automatico"]
+
+
+def _macos_plist_path() -> Path:
+    return Path.home() / "Library" / "LaunchAgents" / f"{LAUNCHD_LABEL_MACOS}.plist"
+
+
+def _install_macos(horario: str, command: list[str]) -> str:
+    hh, mm = [int(value) for value in horario.split(":")]
+    plist = _macos_plist_path()
+    plist.parent.mkdir(parents=True, exist_ok=True)
+    logs = log_dir()
+    payload = {
+        "Label": LAUNCHD_LABEL_MACOS,
+        "ProgramArguments": command,
+        "StartCalendarInterval": {"Hour": hh, "Minute": mm},
+        "ProcessType": "Background",
+        "StandardOutPath": str(logs / "launchd.out.log"),
+        "StandardErrorPath": str(logs / "launchd.err.log"),
+    }
+    temp = plist.with_suffix(".plist.tmp")
+
+    try:
+        with temp.open("wb") as handle:
+            plistlib.dump(payload, handle, sort_keys=False)
+        os.replace(temp, plist)
+
+        domain = f"gui/{os.getuid()}"
+        # bootout pode falhar legitimamente quando não havia tarefa carregada.
+        subprocess.run(
+            ["launchctl", "bootout", domain, str(plist)],
+            capture_output=True,
+            text=True,
+        )
+        result = subprocess.run(
+            ["launchctl", "bootstrap", domain, str(plist)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise SchedulerError((result.stderr or result.stdout or "launchctl bootstrap falhou").strip())
+        if not schedule_exists():
+            raise SchedulerError("O macOS não confirmou o carregamento do agendamento.")
+        return f"Consulta diária agendada para {horario}."
+    except OSError as exc:
+        raise SchedulerError(f"Não foi possível configurar o launchd: {exc}") from exc
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+def _remove_macos() -> None:
+    plist = _macos_plist_path()
+    domain = f"gui/{os.getuid()}"
+    if plist.exists():
+        subprocess.run(
+            ["launchctl", "bootout", domain, str(plist)],
+            capture_output=True,
+            text=True,
+        )
+        try:
+            plist.unlink()
+        except OSError as exc:
+            raise SchedulerError(f"Não foi possível remover o agendamento do macOS: {exc}") from exc
 
 
 def _build_windows_registration_script(horario: str, command: list[str], result_file: Path) -> str:
@@ -88,8 +185,8 @@ def _build_windows_registration_script(horario: str, command: list[str], result_
     user_q = _ps_single_quote(user)
     result_q = _ps_single_quote(str(result_file))
 
-    # Explicitamos bateria, execução atrasada, reinicio apos falha e instancia
-    # única. A rede e tratada pelo próprio cliente HTTP; não condicionamos a
+    # Explicitamos bateria, execução atrasada, reinício após falha e instância
+    # única. A rede é tratada pelo próprio cliente HTTP; não condicionamos a
     # tarefa a um perfil de rede do Windows.
     return f'''$ErrorActionPreference = "Stop"
 try {{
@@ -127,7 +224,7 @@ def _install_windows(horario: str, command: list[str]) -> str:
     script = _build_windows_registration_script(horario, command, result_file)
 
     # Primeiro tenta no contexto normal do usuário. Se o Windows negar a
-    # criação, repete com UAC. Nenhuma senha e lida ou armazenada pelo app.
+    # criação, repete com UAC. Nenhuma senha é lida ou armazenada pelo app.
     direct = _run_powershell_direct(script)
     status = _read_result_file(result_file)
     if direct.returncode != 0 or not status.startswith("OK"):
@@ -136,7 +233,7 @@ def _install_windows(horario: str, command: list[str]) -> str:
         status = _read_result_file(result_file)
     result_file.unlink(missing_ok=True)
     if not status.startswith("OK"):
-        raise SchedulerError(status or "O Windows nao confirmou a criação do agendamento.")
+        raise SchedulerError(status or "O Windows não confirmou a criação do agendamento.")
     return f"Consulta diária agendada para {horario}."
 
 
@@ -166,7 +263,7 @@ def _remove_windows() -> None:
         status = _read_result_file(result_file)
     result_file.unlink(missing_ok=True)
     if not status.startswith("OK"):
-        raise SchedulerError(status or "O Windows nao confirmou a remoção do agendamento.")
+        raise SchedulerError(status or "O Windows não confirmou a remoção do agendamento.")
 
 
 def _windows_current_user() -> str:
@@ -223,9 +320,9 @@ def _marker_path() -> Path:
     return app_data_dir() / "agendamento.json"
 
 
-def _write_marker(horario: str) -> None:
+def _write_marker(horario: str, system: str) -> None:
     _marker_path().write_text(
-        json.dumps({"horario": horario, "sistema": "Windows"}, ensure_ascii=False, indent=2),
+        json.dumps({"horario": horario, "sistema": system}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 

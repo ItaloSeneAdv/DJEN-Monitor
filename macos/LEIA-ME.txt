@@ -1,0 +1,17 @@
+DJEN MONITOR v1.0.1 - macOS
+
+1. Extraia o ZIP inteiro para uma pasta normal.
+2. Abra ABRIR_DJEN_MONITOR.command.
+3. Na primeira execução, o macOS pode bloquear o arquivo por ele não ser assinado/notarizado.
+   Nesse caso, use Ajustes do Sistema > Privacidade e Segurança > Abrir Mesmo Assim.
+4. Faça a configuração inicial. Depois disso, o mesmo arquivo .command abre o menu.
+5. O agendamento diário usa o launchd nativo do macOS. Não é necessário deixar o programa aberto.
+
+Arquivos locais:
+- Configuração/histórico/logs: ~/Library/Application Support/DJEN Monitor/
+- Planilhas: ~/Documents/DJEN Monitor/
+- Agendamento: ~/Library/LaunchAgents/br.italosene.djenmonitor.plist
+
+Para zerar o programa, abra REMOVER_DADOS.command. Ele pergunta separadamente antes de apagar planilhas.
+
+O DJEN Monitor não protocola atos, não substitui conferência profissional e não envia telemetria.

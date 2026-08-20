@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import platform
+import subprocess
 from pathlib import Path
 
 from .api import DJENAPIError, DJENClient
@@ -351,9 +353,12 @@ def open_reports_folder() -> None:
 def open_path(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
     try:
-        if os.name != "nt":
-            raise OSError("Esta versão é destinada ao Windows.")
-        os.startfile(path)  # type: ignore[attr-defined]
+        if os.name == "nt":
+            os.startfile(path)  # type: ignore[attr-defined]
+        elif platform.system() == "Darwin":
+            subprocess.run(["open", str(path)], check=True)
+        else:
+            raise OSError("A abertura automática de pastas é suportada no Windows e macOS.")
     except Exception:
         print(f"Abra manualmente: {path}")
 

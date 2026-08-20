@@ -25,3 +25,18 @@ def brasilia_now() -> datetime:
 
 def brasilia_today() -> date:
     return brasilia_now().date()
+
+
+def format_datetime_ptbr(value: str | datetime | None) -> str:
+    """Formata data/hora para exibição humana no padrão brasileiro."""
+    if value is None or value == "":
+        return "Nunca executado"
+
+    try:
+        dt = value if isinstance(value, datetime) else datetime.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return str(value)
+
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(brasilia_tz())
+    return dt.strftime("%d/%m/%Y às %H:%M")

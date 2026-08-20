@@ -4,6 +4,7 @@ API_BASE_URL = "https://comunicaapi.pje.jus.br/api/v1"
 PORTAL_URL = "https://comunica.pje.jus.br/consulta"
 USER_AGENT = f"DJEN-Monitor/{APP_VERSION}"
 TASK_NAME_WINDOWS = "DJEN Monitor - Consulta diaria"
+LAUNCHD_LABEL_MACOS = "br.italosene.djenmonitor"
 DEFAULT_WINDOW_DAYS = 3
 DEFAULT_TIME = "08:00"
 DEFAULT_TIMEOUT = 30

@@ -44,8 +44,6 @@ def test_macos_install_writes_valid_launchagent(tmp_path, monkeypatch):
     monkeypatch.setattr(scheduler.platform, "system", lambda: "Darwin")
     monkeypatch.setattr(scheduler, "_macos_plist_path", lambda: plist)
     monkeypatch.setattr(scheduler, "log_dir", lambda: logs)
-    # os.getuid não existe no Windows. raising=False permite simular o macOS
-    # também no runner Windows sem mascarar a lógica que queremos testar.
     monkeypatch.setattr(scheduler.os, "getuid", lambda: 501, raising=False)
     calls = []
 
@@ -62,7 +60,8 @@ def test_macos_install_writes_valid_launchagent(tmp_path, monkeypatch):
     assert data["Label"] == "br.italosene.djenmonitor"
     assert data["ProgramArguments"] == ["/tmp/DJEN Monitor", "--automatico"]
     assert data["StartCalendarInterval"] == {"Hour": 8, "Minute": 15}
-    assert data["RunAtLoad"] is False
+    # launchd assume RunAtLoad=false quando a chave é omitida.
+    assert data.get("RunAtLoad", False) is False
     assert any(cmd[:2] == ["launchctl", "bootstrap"] for cmd in calls)
 
 

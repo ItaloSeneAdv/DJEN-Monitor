@@ -2,13 +2,12 @@ name: macOS Build
 
 on:
   push:
-    branches: [main, "feat/macos-v1.0.1"]
-    tags: ["v*"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   macos-intel:
@@ -42,11 +41,6 @@ jobs:
         with:
           name: DJEN-Monitor-macOS-Intel
           path: DJEN-Monitor-macOS-Intel.zip
-      - name: Publish Intel asset
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: DJEN-Monitor-macOS-Intel.zip
 
   macos-apple-silicon:
     runs-on: macos-15
@@ -79,8 +73,3 @@ jobs:
         with:
           name: DJEN-Monitor-macOS-Apple-Silicon
           path: DJEN-Monitor-macOS-Apple-Silicon.zip
-      - name: Publish Apple Silicon asset
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: DJEN-Monitor-macOS-Apple-Silicon.zip

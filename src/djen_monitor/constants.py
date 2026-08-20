@@ -1,0 +1,13 @@
+APP_NAME = "DJEN Monitor"
+APP_VERSION = "1.2.1"
+API_BASE_URL = "https://comunicaapi.pje.jus.br/api/v1"
+PORTAL_URL = "https://comunica.pje.jus.br/consulta"
+USER_AGENT = f"DJEN-Monitor/{APP_VERSION}"
+TASK_NAME_WINDOWS = "DJEN Monitor - Consulta diaria"
+DEFAULT_WINDOW_DAYS = 3
+DEFAULT_TIME = "08:00"
+DEFAULT_TIMEOUT = 30
+DEFAULT_REQUEST_INTERVAL = 0.7
+API_PAGE_SIZE = 50
+API_RESULT_CAP = 10000
+STANDARD_OAB_SUFFIXES = ["", "-O", "-A", "-N", "-B", "-S", "-E"]

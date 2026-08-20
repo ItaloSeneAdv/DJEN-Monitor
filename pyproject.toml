@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "djen-monitor"
+version = "1.2.1"
+description = "Monitor local de publicacoes do DJEN por OAB, com exportacao para Excel."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "DJEN Monitor contributors"}]
+dependencies = ["openpyxl>=3.1,<4", "tzdata>=2025.2", "certifi>=2025.1"]
+
+[project.scripts]
+djen-monitor = "djen_monitor.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

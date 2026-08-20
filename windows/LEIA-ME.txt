@@ -1,0 +1,19 @@
+DJEN MONITOR - WINDOWS
+======================
+
+1. Abra "DJEN Monitor.exe".
+2. Na primeira vez, informe sua OAB e a UF.
+3. Se quiser, informe um nome ou apelido para a OAB. É opcional. ENTER deixa em branco.
+4. Escolha a janela mínima de busca e o horário diário.
+5. Depois disso, use os números do menu.
+
+O programa aceita normalmente acentos em português.
+O programa não precisa ficar aberto.
+As planilhas ficam normalmente em Documentos\DJEN Monitor.
+
+A primeira aba da planilha é RESUMO. As abas de publicações mostram os campos principais de forma organizada, enquanto dados técnicos e texto original continuam preservados em colunas ocultas à direita.
+
+Se o Windows mostrar um aviso de segurança, confirme primeiro que o arquivo foi baixado da página oficial de Releases do repositório.
+
+Documentação completa:
+consulte o README na página do projeto no GitHub.

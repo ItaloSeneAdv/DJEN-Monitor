@@ -1,0 +1,39 @@
+{
+  "count": 2,
+  "items": [
+    {
+      "id": 100001,
+      "hash": "fixture-hash-001",
+      "siglaTribunal": "TJXX",
+      "tribunal": "Tribunal de Justica de Exemplo",
+      "nomeOrgao": "Vara Civel de Exemplo",
+      "dataDisponibilizacao": "2026-08-18",
+      "dataPublicacao": "2026-08-19",
+      "tipoComunicacao": "Intimacao",
+      "meio": "D",
+      "numeroProcesso": "0000000-00.2026.8.00.0000",
+      "texto": "<p>Fixture anonimizado. Fica a parte intimada para se manifestar.</p>",
+      "link": "https://comunica.pje.jus.br/consulta",
+      "destinatarioadvogados": [
+        {"nome": "ADVOGADO EXEMPLO", "numeroOab": "123456", "ufOab": "PR"}
+      ],
+      "destinatarios": [
+        {"nomeParte": "PARTE EXEMPLO", "polo": "ATIVO"}
+      ]
+    },
+    {
+      "numero_comunicacao": "fixture-002",
+      "hash_comunicacao": "fixture-hash-002",
+      "sigla_tribunal": "TJXX",
+      "nome_orgao": "Juizado Especial de Exemplo",
+      "data_disponibilizacao": "2026-08-18",
+      "tipo_comunicacao": "Certidao",
+      "meio": "D",
+      "numero_processo": "1111111-11.2026.8.00.0000",
+      "texto_comunicacao": "Fixture anonimizado para teste de rotina.",
+      "advogados": [
+        {"nomeAdvogado": "ADVOGADO EXEMPLO", "oab": "123456-O", "uf": "PR"}
+      ]
+    }
+  ]
+}

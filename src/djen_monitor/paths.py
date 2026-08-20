@@ -16,6 +16,7 @@ def app_data_dir() -> Path:
     elif system == "Darwin":
         path = Path.home() / "Library" / "Application Support" / APP_NAME
     else:
+        # Mantido apenas para desenvolvimento/testes do código-fonte.
         path = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "djen-monitor"
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -26,12 +27,24 @@ def _windows_documents_dir() -> Path | None:
         return None
     try:
         class GUID(ctypes.Structure):
-            _fields_ = [("Data1", ctypes.c_ulong), ("Data2", ctypes.c_ushort), ("Data3", ctypes.c_ushort), ("Data4", ctypes.c_ubyte * 8)]
-        guid = GUID(0xFDD39AD0, 0x238F, 0x46AF, (ctypes.c_ubyte * 8)(0xAD, 0xB4, 0x6C, 0x85, 0x48, 0x03, 0x69, 0xC7))
+            _fields_ = [
+                ("Data1", ctypes.c_ulong),
+                ("Data2", ctypes.c_ushort),
+                ("Data3", ctypes.c_ushort),
+                ("Data4", ctypes.c_ubyte * 8),
+            ]
+
+        # FOLDERID_Documents = {FDD39AD0-238F-46AF-ADB4-6C85480369C7}
+        guid = GUID(
+            0xFDD39AD0, 0x238F, 0x46AF,
+            (ctypes.c_ubyte * 8)(0xAD, 0xB4, 0x6C, 0x85, 0x48, 0x03, 0x69, 0xC7),
+        )
         raw_ptr = ctypes.c_void_p()
         shell32 = ctypes.windll.shell32
         ole32 = ctypes.windll.ole32
-        shell32.SHGetKnownFolderPath.argtypes = [ctypes.POINTER(GUID), ctypes.c_uint32, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)]
+        shell32.SHGetKnownFolderPath.argtypes = [
+            ctypes.POINTER(GUID), ctypes.c_uint32, ctypes.c_void_p, ctypes.POINTER(ctypes.c_void_p)
+        ]
         shell32.SHGetKnownFolderPath.restype = ctypes.c_long
         ole32.CoTaskMemFree.argtypes = [ctypes.c_void_p]
         ole32.CoTaskMemFree.restype = None
@@ -77,6 +90,7 @@ def stable_bin_dir() -> Path:
 
 
 def fallback_reports_dir() -> Path:
+    """Pasta de relatórios sempre gravável no perfil local do usuário."""
     path = app_data_dir() / "Planilhas"
     path.mkdir(parents=True, exist_ok=True)
     return path

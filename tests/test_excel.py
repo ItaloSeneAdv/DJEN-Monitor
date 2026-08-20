@@ -1,9 +1,11 @@
 import json
+import zipfile
 from pathlib import Path
 
 from openpyxl import load_workbook
 
 from djen_monitor.classify import classify
+from djen_monitor.constants import APP_VERSION
 from djen_monitor.excel import create_report
 from djen_monitor.normalize import normalize_item
 
@@ -12,7 +14,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "comunicacoes_anonimizadas.json"
 
 def execution_fixture(**overrides):
     data = {
-        "app_version": "1.2.1",
+        "app_version": APP_VERSION,
         "started_at": "2026-08-19T08:00:00-03:00",
         "finished_at": "2026-08-19T08:00:10-03:00",
         "start_date": "2026-08-17",
@@ -57,11 +59,29 @@ def test_excel_has_polished_summary_expected_sheets_and_long_text(tmp_path):
     assert "Texto integral - continuação 3" in headers
     assert ws["I5"].value == "João da Silva (123456/PR)"
     assert ws.freeze_panes == "A5"
-    assert ws.tables
+    assert not ws.tables
+    assert ws.auto_filter.ref
 
     # Colunas técnicas continuam no arquivo, mas ficam escondidas por padrão.
     technical_col = headers.index("Identificador da comunicação") + 1
     assert ws.column_dimensions[ws.cell(4, technical_col).column_letter].hidden is True
+    wb.close()
+
+
+def test_excel_has_no_structured_table_parts_that_excel_desktop_repairs(tmp_path):
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    pub = classify(normalize_item(payload["items"][0], "123456", "PR"))
+    path = create_report([pub], [pub], execution_fixture(), tmp_path)
+
+    with zipfile.ZipFile(path) as archive:
+        names = archive.namelist()
+        assert not any(name.startswith("xl/tables/") for name in names)
+
+    wb = load_workbook(path, read_only=False)
+    for sheet_name in ["NOVAS_PUBLICACOES", "TODAS_ENCONTRADAS", "POSSIVEL_PRAZO", "REVISAR", "ROTINA"]:
+        ws = wb[sheet_name]
+        assert not ws.tables
+        assert ws.auto_filter.ref is not None
     wb.close()
 
 

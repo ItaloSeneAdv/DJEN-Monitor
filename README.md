@@ -6,9 +6,11 @@ O objetivo é direto: você informa sua OAB uma vez, o programa consulta o DJEN 
 
 **Esta versão é exclusiva para Windows 64 bits.** Não exige Docker, servidor, navegador aberto ou banco de dados externo. A Release final também não exige que o usuário instale Python.
 
+É seguro! Qualquer desconfiança sobre o conteúdo, só mandar o link desse repositório para sua IA de preferência que ela confere.
+
 ## Para quem só quer usar
 
-1. Abra **Releases** no GitHub.
+1. Abra **Releases** no GitHub (é ali na lateral direita).
 2. Baixe `DJEN-Monitor-Windows-x64.zip`.
 3. Extraia o ZIP para uma pasta normal.
 4. Abra `DJEN Monitor.exe`.

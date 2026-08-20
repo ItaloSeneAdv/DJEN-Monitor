@@ -1,5 +1,5 @@
 APP_NAME = "DJEN Monitor"
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.0.1"
 API_BASE_URL = "https://comunicaapi.pje.jus.br/api/v1"
 PORTAL_URL = "https://comunica.pje.jus.br/consulta"
 USER_AGENT = f"DJEN-Monitor/{APP_VERSION}"

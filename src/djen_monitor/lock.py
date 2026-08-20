@@ -18,16 +18,11 @@ class SingleRunLock:
     def __enter__(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.file = self.path.open("a+b")
-        self.file.seek(0)
-        if self.file.read(1) == b"":
-            self.file.seek(0)
-            self.file.write(b"0")
-            self.file.flush()
-        self.file.seek(0)
 
         if os.name == "nt":
             import msvcrt
             try:
+                self.file.seek(0)
                 msvcrt.locking(self.file.fileno(), msvcrt.LK_NBLCK, 1)
             except OSError as exc:
                 self.file.close()
@@ -41,6 +36,15 @@ class SingleRunLock:
                 self.file.close()
                 self.file = None
                 raise AlreadyRunningError("Ja existe uma consulta do DJEN Monitor em andamento.") from exc
+
+        # Only touch file contents once we're confirmed to hold the lock.
+        self.file.seek(0)
+        if self.file.read(1) == b"":
+            self.file.seek(0)
+            self.file.write(b"0")
+            self.file.flush()
+        self.file.seek(0)
+
         return self
 
     def __exit__(self, exc_type, exc, tb):
